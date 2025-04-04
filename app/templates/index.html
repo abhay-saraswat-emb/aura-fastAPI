@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>Aura Chatbot</h1>
+            </div>
+            <div class="model-selector">
+                <label for="model-select">Choose AI Model:</label>
+                <select id="model-select">
+                    <option value="Claude">Claude</option>
+                    <option value="Gemini">Gemini</option>
+                    <option value="GPT">GPT</option>
+                </select>
+            </div>
+        </header>
+        
+        <main>
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message system">
+                        <div class="message-content">
+                            <p>Hello! I'm Aura, your AI assistant. How can I help you today?</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-input">
+                    <textarea id="user-input" placeholder="Type your message here..." rows="3"></textarea>
+                    <button id="send-button">Send</button>
+                </div>
+            </div>
+            
+            <div class="settings-panel">
+                <h3>Advanced Settings</h3>
+                <div class="setting">
+                    <label for="system-prompt">System Prompt:</label>
+                    <textarea id="system-prompt" rows="3">You are a helpful assistant.</textarea>
+                </div>
+                <div class="setting">
+                    <label for="max-tokens">Max Tokens:</label>
+                    <input type="number" id="max-tokens" value="256" min="1" max="4096">
+                </div>
+                <div class="setting">
+                    <label for="temperature">Temperature:</label>
+                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7">
+                    <span id="temperature-value">0.7</span>
+                </div>
+                <div class="setting">
+                    <label for="internet-search">Internet Search</label>
+                    <input type="checkbox" id="internet-search" />
+                </div>
+                <div class="features">
+                    <button id="pdf-button" class="feature-button">PDF Analysis</button>
+                    <button id="tts-button" class="feature-button">Text to Speech</button>
+                    <button id="clear-button" class="feature-button">Clear Chat</button>
+                    <button id="export-button" class="feature-button">Export Chat</button>
+                    <div id="pdf-modal" class="modal">
+                        <div class="modal-content">
+                            <span class="close-modal">&times;</span>
+                            <h2>Upload PDF for Analysis</h2>
+                            <label for="pdf-file" class="upload-label">Choose a PDF File</label>
+                            <input type="file" id="pdf-file" accept="application/pdf">
+                            <div id="file-name-display">Select PDF file</div>
+                            <button id="upload-pdf-button">Upload</button>
+                            <div id="pdf-status"></div>
+                        </div>
+                    </div>                    
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Aura Chatbot - Powered by EMB Global</p>
+        </footer>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+</body>
+</html>
