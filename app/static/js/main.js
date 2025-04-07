@@ -97,13 +97,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (file.type !== 'application/pdf') {
-            showPdfStatus('Selected file is not a PDF', 'error');
-            return;
+        if (file.type == 'application/pdf') {
         }
         
         // Show loading status
-        showPdfStatus('Uploading and analyzing PDF...', 'loading');
+        showPdfStatus('Uploading and analyzing file...', 'loading');
         
         // Create form data
         const formData = new FormData();
@@ -119,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(errorText || 'Failed to upload PDF');
+                throw new Error(errorText || 'Failed to upload file');
             }
             
             const result = await response.json();
@@ -133,21 +131,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update UI to indicate PDF mode
             pdfButton.classList.add('pdf-active');
-            pdfButton.innerHTML = 'PDF Analysis <span class="pdf-badge">Active</span>';
+            pdfButton.innerHTML = 'File <span class="pdf-badge">Active</span>';
             
             // Close the modal after a delay
             setTimeout(() => {
                 pdfModal.style.display = 'none';
                 
-                // Add a system message to indicate PDF mode
-                addMessageToChat(`I've analyzed "${file.name}". You can now ask me questions about this PDF.`, 'system');
+                // Add a system message to indicate file mode
+                addMessageToChat(`I've analyzed "${file.name}". You can now ask me questions about this file.`, 'system');
                 
-                // Reset conversation history for the new PDF
+                // Reset conversation history for the new file
                 conversationHistory = [];
             }, 2000);
             
         } catch (error) {
-            console.error('PDF upload error:', error);
+            console.error('file upload error:', error);
             showPdfStatus(`Error: ${error.message}`, 'error');
         }
     }
@@ -171,13 +169,13 @@ document.addEventListener('DOMContentLoaded', function() {
         isPdfMode = false;
         activePdfUrl = null;
         pdfButton.classList.remove('pdf-active');
-        pdfButton.textContent = 'PDF Analysis';
+        pdfButton.textContent = 'File';
         
         // Reset conversation history
         conversationHistory = [];
         
         // Add a system message
-        addMessageToChat('Exited PDF analysis mode. We are now having a regular conversation.', 'system');
+        addMessageToChat('Exited File mode. We are now having a regular conversation.', 'system');
     }
 
     // Function to send message and get response
@@ -234,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Send API request
             let apiEndpoint = '/chatbot/';
             if (isPdfMode) {
-                apiEndpoint = '/chatbot/pdf-chat';
+                apiEndpoint = '/chatbot/file-chat';
             } else if (internetSearch.checked) {
                 apiEndpoint = '/search/';
             }

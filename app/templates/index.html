@@ -60,17 +60,16 @@
                     <input type="checkbox" id="internet-search" />
                 </div>
                 <div class="features">
-                    <button id="pdf-button" class="feature-button">PDF Analysis</button>
+                    <button id="pdf-button" class="feature-button">Upload</button>
                     <button id="tts-button" class="feature-button">Text to Speech</button>
                     <button id="clear-button" class="feature-button">Clear Chat</button>
                     <button id="export-button" class="feature-button">Export Chat</button>
                     <div id="pdf-modal" class="modal">
                         <div class="modal-content">
                             <span class="close-modal">&times;</span>
-                            <h2>Upload PDF for Analysis</h2>
-                            <label for="pdf-file" class="upload-label">Choose a PDF File</label>
-                            <input type="file" id="pdf-file" accept="application/pdf">
-                            <div id="file-name-display">Select PDF file</div>
+                            <h2>Upload file for Analysis</h2>
+                            <input type="file" id="pdf-file">
+                            <div id="file-name-display">Select file</div>
                             <button id="upload-pdf-button">Upload</button>
                             <div id="pdf-status"></div>
                         </div>

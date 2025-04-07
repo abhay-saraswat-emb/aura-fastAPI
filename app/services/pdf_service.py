@@ -183,25 +183,34 @@ async def pdf_openai_stream_response(
     max_tokens: int, 
     temperature: float,
     conversation_history: List[Dict[str, str]] = [],
-    pdf_url:str = None
+    file_url:str = None
 ):
     try:
         file_id = None
         
         # Handle PDF if URL is provided
-        if pdf_url:
+        if file_url:
             try:
-                response = httpx.get(pdf_url)
+                response = httpx.get(file_url)
                 response.raise_for_status()
-                
-                with open("temp_pdf.pdf", "wb") as f:
+
+                filename = file_url.split("/")[-1]
+                file_ext = os.path.splitext(filename)[-1].lower()
+                local_path = f"temp_uploaded_file{file_ext}"
+
+                # Write to disk temporarily
+                with open(local_path, "wb") as f:
                     f.write(response.content)
-                
-                file =openai_client.files.create(
-                    file=open("temp_pdf.pdf", "rb"),
-                    purpose="assistants"
-                )
-                file_id = file.id
+
+                # Upload to OpenAI
+                with open(local_path, "rb") as f:
+                    file = openai_client.files.create(
+                        file=f,
+                        purpose="assistants"
+                    )
+                    file_id = file.id
+
+                os.remove(local_path)
             except Exception as e:
                 yield f"data: Error fetching PDF: {str(e)}\n\n"
                 return
