@@ -16,3 +16,6 @@ google-genai
 jinja2
 python-multipart
 tavily-python
+pandas
+openpyxl
+python-pptx

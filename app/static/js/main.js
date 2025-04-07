@@ -460,3 +460,164 @@ document.addEventListener('DOMContentLoaded', function() {
 if (internetSearch.checked) {
     addMessageToChat("Internet search is enabled. I'm pulling real-time data.", "system");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    // Example product data (optional dynamic render)
+    const products = [
+      {
+        id: 1,
+        title: "AI Assistant Pack",
+        description: "Boost your workflow with this pre-configured AI tool pack.",
+        price: "$19.99",
+        image: "https://via.placeholder.com/300x150"
+      },
+      {
+        id: 2,
+        title: "TTS Plugin",
+        description: "A sleek text-to-speech plugin for fast integration.",
+        price: "$9.99",
+        image: "https://via.placeholder.com/300x150"
+      },
+      {
+        id: 3,
+        title: "PDF Summarizer",
+        description: "Summarize lengthy PDFs in seconds.",
+        price: "$14.99",
+        image: "https://via.placeholder.com/300x150"
+      }
+    ];
+  
+    const grid = document.querySelector(".marketplace-grid");
+  
+    // Dynamically render products
+    if (grid && products.length) {
+      products.forEach((product) => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <img src="${product.image}" class="product-image" alt="${product.title}" />
+          <div class="product-title">${product.title}</div>
+          <div class="product-description">${product.description}</div>
+          <div class="product-actions">
+            <span class="product-price">${product.price}</span>
+            <button class="buy-button" data-id="${product.id}">Buy</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  
+    // Event delegation for Buy buttons
+    document.body.addEventListener("click", (e) => {
+      if (e.target.classList.contains("buy-button")) {
+        const productId = e.target.dataset.id;
+        const product = products.find(p => p.id == productId);
+        if (product) {
+          alert(`You bought "${product.title}" for ${product.price}`);
+          // Later: Add to cart, trigger checkout modal, etc.
+        }
+      }
+    });
+  });
+
+  document.body.addEventListener("click", (e) => {
+    if (e.target.closest(".product-card") && !e.target.classList.contains("buy-button")) {
+      const card = e.target.closest(".product-card");
+      const title = card.querySelector(".product-title").textContent;
+      const image = card.querySelector(".product-image").src;
+      const description = card.querySelector(".product-description").textContent;
+      const price = card.querySelector(".product-price").textContent;
+  
+      document.getElementById("modal-title").textContent = title;
+      document.getElementById("modal-image").src = image;
+      document.getElementById("modal-description").textContent = description;
+      document.getElementById("modal-price").textContent = `Price: ${price}`;
+  
+      document.getElementById("product-modal").style.display = "block";
+    }
+  });
+  
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const products = [
+      {
+        id: 1,
+        title: "AI Assistant Pack",
+        description: "Boost your workflow with this pre-configured AI tool pack.",
+        price: "$19.99",
+        image: "https://via.placeholder.com/300x150"
+      },
+      {
+        id: 2,
+        title: "TTS Plugin",
+        description: "A sleek text-to-speech plugin for fast integration.",
+        price: "$9.99",
+        image: "https://via.placeholder.com/300x150"
+      },
+      {
+        id: 3,
+        title: "PDF Summarizer",
+        description: "Summarize lengthy PDFs in seconds.",
+        price: "$14.99",
+        image: "https://via.placeholder.com/300x150"
+      }
+    ];
+  
+    const grid = document.querySelector(".marketplace-grid");
+  
+    if (grid && products.length) {
+      products.forEach((product) => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.dataset.id = product.id;
+        card.innerHTML = `
+          <img src="${product.image}" class="product-image" alt="${product.title}" />
+          <div class="product-title">${product.title}</div>
+          <div class="product-description">${product.description}</div>
+          <div class="product-actions">
+            <span class="product-price">${product.price}</span>
+            <button class="publish-button" data-id="${product.id}">Publish</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  
+    const modal = document.getElementById("publish-modal");
+    let selectedProductId = null;
+  
+    document.body.addEventListener("click", (e) => {
+      if (e.target.classList.contains("publish-button")) {
+        selectedProductId = e.target.dataset.id;
+        modal.style.display = "block";
+      }
+  
+      if (e.target.classList.contains("publish-option")) {
+        const mode = e.target.dataset.mode;
+        if (!selectedProductId) return;
+  
+        fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: selectedProductId, mode })
+        })
+          .then(res => res.json())
+          .then(data => {
+            alert(`Published as ${mode.toUpperCase()}: ${data.message || 'Success'}`);
+          })
+          .catch(err => {
+            alert(`Failed to publish: ${err.message}`);
+          })
+          .finally(() => {
+            modal.style.display = "none";
+            selectedProductId = null;
+          });
+      }
+  
+      if (e.target.classList.contains("close-modal")) {
+        modal.style.display = "none";
+        selectedProductId = null;
+      }
+    });
+  });

@@ -7,6 +7,30 @@
     <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+                .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            padding-top: 60px;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            font-family: 'Roboto', sans-serif;
+        }
+        .modal-content input, .modal-content textarea, .modal-content select {
+            width: 100%; margin: 10px 0; padding: 8px; border-radius: 5px; border: 1px solid #ccc;
+        }
+
+    </style>
 </head>
 <body>
     <div class="container">
@@ -25,6 +49,23 @@
         </header>
         
         <main>
+            <section class="-container">
+                <div class="marketplace-header">
+                  <button class="feature-button">Publish</button>
+                </div>
+                <div class="marketplace-grid">
+                  </div>
+                  <div id="product-modal" class="modal">
+                    <div class="modal-content">
+                      <span class="close-modal" onclick="document.getElementById('product-modal').style.display='none'">&times;</span>
+                      <h2 id="modal-title"></h2>
+                      <img id="modal-image" src="" alt="" style="width:100%; border-radius: 10px; margin: 10px 0;" />
+                      <p id="modal-description"></p>
+                      <p id="modal-price" style="font-weight: bold;"></p>
+                    </div>
+                  </div>
+                </section>
+                
             <div class="chat-container">
                 <div class="chat-messages" id="chat-messages">
                     <div class="message system">
@@ -76,13 +117,147 @@
                     </div>                    
                 </div>
             </div>
+            <div id="publish-modal" class="modal">
+                <div class="modal-content">
+                  <span class="close-modal" onclick="document.getElementById('publish-modal').style.display='none'">&times;</span>
+                  <h2>Publish Bot</h2>
+                  <label>Name:</label>
+                  <input type="text" id="bot-name" placeholder="Bot Name" />
+                  <label>Description:</label>
+                  <textarea id="bot-description" placeholder="Short description..."></textarea>
+                  <label>Visibility:</label>
+                  <select id="bot-visibility">
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                    <option value="link">Share via URL</option>
+                  </select>
+                  <button id="submit-publish" class="feature-button">Publish</button>
+                  <div id="publish-status"></div>
+                  <div id="share-url" style="margin-top: 10px;"></div>
+                </div>
+              </div>
+              
         </main>
         
         <footer>
+            <section class="marketplace-link">
+                <h3>Discover Public Bots</h3>
+                <p>Explore bots shared by others in the <a href="/marketplace" style="color: #007BFF; font-weight: bold;">Marketplace</a>.</p></section>
             <p>&copy; 2025 Aura Chatbot - Powered by EMB Global</p>
         </footer>
     </div>
     
     <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+        
+        <script>
+        document.querySelector(".marketplace-header .feature-button").addEventListener("click", () => {
+          document.getElementById("publish-modal").style.display = "block";
+        });
+        
+        document.getElementById("submit-publish").addEventListener("click", async () => {
+          const name = document.getElementById("bot-name").value;
+          const description = document.getElementById("bot-description").value;
+          const visibility = document.getElementById("bot-visibility").value;
+          const system_prompt = document.getElementById("system-prompt").value;
+          const model = document.getElementById("model-select").value.toLowerCase();
+          const temperature = parseFloat(document.getElementById("temperature").value);
+          const max_tokens = parseInt(document.getElementById("max-tokens").value);
+          const pdf_url = null
+        
+          const payload = {
+            name,
+            description,
+            system_prompt,
+            model,
+            temperature,
+            max_tokens,
+            visibility,
+            pdf_url
+          };
+        
+          const res = await fetch("/market-place/bots", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        
+          const data = await res.json();
+          document.getElementById("publish-status").innerText = "Published successfully!";
+
+          document.getElementById("share-url").innerHTML = "";
+        
+          if (visibility === "link" && data.share_url) {
+            const url = `http://0.0.0.0:8000/?share_url=${data.share_url}`;
+            document.getElementById("share-url").innerHTML = `
+                <p>🔗 <strong>Shareable Link:</strong></p>
+                <input type="text" id="share-url-input" value="${url}" readonly style="width:100%; padding:6px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 8px;" />
+                <button onclick="copyShareURL()" class="feature-button" style="margin-top: 5px;">Copy Link</button>
+            `;
+        }
+        
+         // setTimeout(() => {
+         //   document.getElementById("publish-modal").style.display = "none";
+       //   }, 3000);
+        });
+
+        async function prefillBotConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareUrl = urlParams.get('share_url');
+            
+            if (!shareUrl) return;
+        
+            try {
+                const res = await fetch(`/market-place/bots/share/${shareUrl}`);
+                const bot = await res.json();
+        
+                if (bot.system_prompt) {
+                    document.getElementById("system-prompt").value = bot.system_prompt;
+                }
+        
+                if (bot.model) {
+                    const modelSelect = document.getElementById("model-select");
+                    const normalized = bot.model.toLowerCase();
+                
+                    for (let i = 0; i < modelSelect.options.length; i++) {
+                        if (modelSelect.options[i].value.toLowerCase() === normalized) {
+                            modelSelect.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+        
+                if (!isNaN(bot.temperature)) {
+                    document.getElementById("temperature").value = bot.temperature;
+                    document.getElementById("temperature-value").textContent = bot.temperature;
+                }
+        
+                if (!isNaN(bot.max_tokens)) {
+                    document.getElementById("max-tokens").value = bot.max_tokens;
+                }
+        
+                if (bot.name) {
+                    document.getElementById("bot-name") && (document.getElementById("bot-name").value = bot.name);
+                }
+        
+                if (bot.description) {
+                    document.getElementById("bot-description") && (document.getElementById("bot-description").value = bot.description);
+                }
+        
+            } catch (err) {
+                console.error("Failed to load bot config:", err);
+            }
+        }
+        
+        window.addEventListener("DOMContentLoaded", prefillBotConfig);
+
+        function copyShareURL() {
+            const input = document.getElementById("share-url-input");
+            input.select();
+            input.setSelectionRange(0, 99999); // for mobile
+            document.execCommand("copy");
+            alert("Link copied to clipboard!");
+        }
+        </script>
+        
 </body>
 </html>
