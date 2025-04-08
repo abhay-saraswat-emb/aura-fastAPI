@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const ttsButton = document.getElementById('tts-button');
     const clearButton = document.getElementById('clear-button');
     const exportButton = document.getElementById('export-button');
+    const chatScrollUp = document.getElementById('chat-scroll-up');
+    const chatScrollDown = document.getElementById('chat-scroll-down');
+    const chatScrollThumb = document.getElementById('chat-scroll-thumb');
+    const scrollTrack = document.querySelector('.scroll-track');
     
     // PDF Modal Elements
     const pdfModal = document.getElementById('pdf-modal');
@@ -27,6 +31,69 @@ document.addEventListener('DOMContentLoaded', function() {
     let conversationHistory = [];
     let activePdfUrl = null;
     let isPdfMode = false;
+    let isDragging = false;
+    
+    // Initialize custom scroller
+    function updateChatScrollThumb() {
+        const contentHeight = chatMessages.scrollHeight;
+        const viewportHeight = chatMessages.clientHeight;
+        const scrollRatio = viewportHeight / contentHeight;
+        
+        // Only show thumb if content is scrollable
+        if (scrollRatio >= 1) {
+            chatScrollThumb.style.display = 'none';
+            return;
+        }
+        
+        chatScrollThumb.style.display = 'block';
+        const trackHeight = scrollTrack.clientHeight;
+        const thumbHeight = Math.max(30, trackHeight * scrollRatio);
+        chatScrollThumb.style.height = thumbHeight + 'px';
+        
+        const scrollPosition = chatMessages.scrollTop;
+        const maxScroll = contentHeight - viewportHeight;
+        const thumbPosition = (scrollPosition / maxScroll) * (trackHeight - thumbHeight);
+        chatScrollThumb.style.top = thumbPosition + 'px';
+    }
+    
+    // Set up custom scroller events
+    chatScrollUp.addEventListener('click', () => {
+        chatMessages.scrollBy({ top: -100, behavior: 'smooth' });
+    });
+    
+    chatScrollDown.addEventListener('click', () => {
+        chatMessages.scrollBy({ top: 100, behavior: 'smooth' });
+    });
+    
+    chatScrollThumb.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        
+        const trackRect = scrollTrack.getBoundingClientRect();
+        const thumbHeight = chatScrollThumb.clientHeight;
+        const trackHeight = trackRect.height;
+        
+        let thumbPosition = e.clientY - trackRect.top - (thumbHeight / 2);
+        thumbPosition = Math.max(0, Math.min(trackHeight - thumbHeight, thumbPosition));
+        
+        const contentHeight = chatMessages.scrollHeight;
+        const viewportHeight = chatMessages.clientHeight;
+        const maxScroll = contentHeight - viewportHeight;
+        const scrollPosition = (thumbPosition / (trackHeight - thumbHeight)) * maxScroll;
+        
+        chatMessages.scrollTop = scrollPosition;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+    
+    chatMessages.addEventListener('scroll', updateChatScrollThumb);
+    window.addEventListener('resize', updateChatScrollThumb);
 
     // Update temperature value display
     temperature.addEventListener('input', function() {
@@ -349,8 +416,11 @@ document.addEventListener('DOMContentLoaded', function() {
         messageElement.appendChild(messageContent);
         chatMessages.appendChild(messageElement);
         
-        // Scroll to the new message
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Scroll to the new message with a slight delay to ensure rendering is complete
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            updateChatScrollThumb();
+        }, 10);
         
         return messageElement;
     }
@@ -370,8 +440,11 @@ document.addEventListener('DOMContentLoaded', function() {
         messageElement.appendChild(messageContent);
         chatMessages.appendChild(messageElement);
         
-        // Scroll to the thinking indicator
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Scroll to the thinking indicator with a slight delay
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            updateChatScrollThumb();
+        }, 10);
         
         return messageElement;
     }
@@ -455,6 +528,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize the app - only load preferences, not conversation history
     loadUserPreferences();
+    
+    // Initialize the scroll thumb
+    setTimeout(updateChatScrollThumb, 100);
 });
 
 if (internetSearch.checked) {

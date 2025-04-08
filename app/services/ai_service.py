@@ -80,6 +80,8 @@ async def claude_stream_response(
         
         # Add the current prompt
         messages.append({"role": "user", "content": prompt})
+
+        print(max_tokens)
         
         with claude_client.messages.stream(
             model="claude-3-7-sonnet-20250219",

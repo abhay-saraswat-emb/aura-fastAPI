@@ -66,18 +66,27 @@
                   </div>
                 </section>
                 
-            <div class="chat-container">
-                <div class="chat-messages" id="chat-messages">
-                    <div class="message system">
-                        <div class="message-content">
-                            <p>Hello! I'm Aura, your AI assistant. How can I help you today?</p>
+            <div class="chat-container" style="position: relative; overflow: hidden; height: calc(100vh - 180px); min-height: 500px;">
+                <div class="chat-messages-container" style="display: flex; height: calc(100% - 70px);">
+                    <div class="chat-messages" id="chat-messages" style="flex: 1; padding: 20px; padding-bottom: 20px; overflow-y: auto;">
+                        <div class="message system">
+                            <div class="message-content">
+                                <p>Hello! I'm Aura, your AI assistant. How can I help you today?</p>
+                            </div>
                         </div>
+                    </div>
+                    <div class="chat-scroller" style="width: 30px; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; padding: 10px 0;">
+                        <button id="chat-scroll-up" class="scroll-button" style="width: 24px; height: 24px; border: none; background-color: var(--primary-color); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; margin: 5px 0;">▲</button>
+                        <div class="scroll-track" style="flex: 1; width: 4px; background-color: var(--light-gray); margin: 10px 0; position: relative; border-radius: 2px;">
+                            <div id="chat-scroll-thumb" class="scroll-thumb" style="width: 8px; background-color: var(--primary-color); position: absolute; left: -2px; border-radius: 4px; cursor: pointer;"></div>
+                        </div>
+                        <button id="chat-scroll-down" class="scroll-button" style="width: 24px; height: 24px; border: none; background-color: var(--primary-color); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; margin: 5px 0;">▼</button>
                     </div>
                 </div>
                 
-                <div class="chat-input">
-                    <textarea id="user-input" placeholder="Type your message here..." rows="3"></textarea>
-                    <button id="send-button">Send</button>
+                <div class="chat-input" style="position: absolute; bottom: 0; left: 0; right: 0; background-color: white; border-top: 1px solid var(--light-gray); z-index: 10; padding: 15px;">
+                    <textarea id="user-input" placeholder="Type your message here..." rows="2"></textarea>
+                    <button id="send-button" class="feature-button">Send</button>
                 </div>
             </div>
             
@@ -143,6 +152,9 @@
             <section class="marketplace-link">
                 <h3>Discover Public Bots</h3>
                 <p>Explore bots shared by others in the <a href="/marketplace" style="color: #007BFF; font-weight: bold;">Marketplace</a>.</p></section>
+                <section class="BRD-Generator-link">
+                    <h3>BRD Generator</h3>
+                    <a href="/brd-generator" style="color: #007BFF; font-weight: bold;">BRD Generator</a></section>
             <p>&copy; 2025 Aura Chatbot - Powered by EMB Global</p>
         </footer>
     </div>

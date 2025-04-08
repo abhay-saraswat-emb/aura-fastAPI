@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRD Generator</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--light-gray);
+            z-index: 100;
+        }
+        
+        main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        footer {
+            background-color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border-top: 1px solid var(--light-gray);
+        }
+        
+        /* Chat Section */
+        .chat-section {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--light-gray);
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: white;
+        }
+        
+        .chat-input-container {
+            background-color: white;
+            padding: 15px;
+            border-top: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+        }
+        
+        .chat-input-container textarea {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            resize: none;
+            font-family: inherit;
+            height: 40px;
+            max-height: 120px;
+        }
+        
+        .chat-input-container button {
+            margin-left: 10px;
+            height: 40px;
+        }
+        
+        /* BRD Preview Section */
+        .brd-section {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .brd-header {
+            padding: 15px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .brd-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .brd-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: white;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        
+        .brd-scroller {
+            width: 30px;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+        }
+        
+        .scroll-button {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        
+        .scroll-track {
+            flex: 1;
+            width: 4px;
+            background-color: var(--light-gray);
+            margin: 10px 0;
+            position: relative;
+            border-radius: 2px;
+        }
+        
+        .scroll-thumb {
+            width: 8px;
+            background-color: var(--primary-color);
+            position: absolute;
+            left: -2px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* Message styling */
+        .message {
+            max-width: 85%;
+            margin-bottom: 15px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+        }
+        
+        .message.system {
+            align-self: flex-start;
+        }
+        
+        .message-content {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message.user .message-content {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .message.system .message-content {
+            background-color: var(--light-gray);
+            color: var(--text-color);
+        }
+        
+        /* Markdown sections */
+        .markdown-section {
+            margin-top: 20px;
+            border-top: 1px solid var(--light-gray);
+            padding-top: 20px;
+        }
+        
+        .markdown-section:first-child {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
+        }
+        
+        /* Markdown styling */
+        .brd-content h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        
+        .brd-content h2 {
+            font-size: 1.4rem;
+            color: var(--secondary-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .brd-content h3 {
+            font-size: 1.2rem;
+            margin-top: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .brd-content p {
+            margin-bottom: 1rem;
+        }
+        
+        .brd-content ul, .brd-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .brd-content code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .brd-content pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .brd-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin-left: 0;
+            color: var(--dark-gray);
+        }
+        
+        .brd-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .brd-content th, .brd-content td {
+            border: 1px solid var(--light-gray);
+            padding: 8px;
+        }
+        
+        .brd-content th {
+            background-color: var(--bg-color);
+        }
+        
+        .brd-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>BRD Generator</h1>
+            </div>
+            <div>
+                <a href="/" class="feature-button">Back to Chat</a>
+            </div>
+        </header>
+        
+        <main>
+            <!-- Chat Section -->
+            <section class="chat-section">
+                <div id="chat-container" class="chat-container">
+                    <div class="message system">
+                        <div class="message-content">
+                            <p>Hello! Tell me what you're building and I'll generate a Business Requirements Document for you.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <textarea id="user-input" placeholder="Type your message here..."></textarea>
+                    <button id="send-button" class="feature-button">Send</button>
+                </div>
+            </section>
+            
+            <!-- BRD Preview Section -->
+            <section class="brd-section">
+                <div class="brd-header">
+                    <span>📄 BRD Preview</span>
+                    <div class="brd-actions">
+                        <button id="export-brd" class="feature-button">Export</button>
+                        <button id="clear-brd" class="feature-button">Clear</button>
+                    </div>
+                </div>
+                <div class="brd-container">
+                    <div id="markdown-preview" class="brd-content"></div>
+                    <div class="brd-scroller">
+                        <button id="scroll-up" class="scroll-button">▲</button>
+                        <div class="scroll-track">
+                            <div id="scroll-thumb" class="scroll-thumb"></div>
+                        </div>
+                        <button id="scroll-down" class="scroll-button">▼</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 Aura Chatbot - Powered by EMB Global</p>
+        </footer>
+    </div>
+    
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const markdownPreview = document.getElementById('markdown-preview');
+        const exportBrdButton = document.getElementById('export-brd');
+        const clearBrdButton = document.getElementById('clear-brd');
+        const scrollUpButton = document.getElementById('scroll-up');
+        const scrollDownButton = document.getElementById('scroll-down');
+        const scrollThumb = document.getElementById('scroll-thumb');
+        const scrollTrack = document.querySelector('.scroll-track');
+        
+        let conversationHistory = [];
+        let isStreaming = false;
+        let markdownStarted = false;
+        let markdownBuffer = "";
+        let isDragging = false;
+        
+        // Initialize custom scroller
+        function updateScrollThumb() {
+            const contentHeight = markdownPreview.scrollHeight;
+            const viewportHeight = markdownPreview.clientHeight;
+            const scrollRatio = viewportHeight / contentHeight;
+            
+            // Only show thumb if content is scrollable
+            if (scrollRatio >= 1) {
+                scrollThumb.style.display = 'none';
+                return;
+            }
+            
+            scrollThumb.style.display = 'block';
+            const trackHeight = scrollTrack.clientHeight;
+            const thumbHeight = Math.max(30, trackHeight * scrollRatio);
+            scrollThumb.style.height = thumbHeight + 'px';
+            
+            const scrollPosition = markdownPreview.scrollTop;
+            const maxScroll = contentHeight - viewportHeight;
+            const thumbPosition = (scrollPosition / maxScroll) * (trackHeight - thumbHeight);
+            scrollThumb.style.top = thumbPosition + 'px';
+        }
+        
+        // Set up custom scroller events
+        scrollUpButton.addEventListener('click', () => {
+            markdownPreview.scrollBy({ top: -100, behavior: 'smooth' });
+        });
+        
+        scrollDownButton.addEventListener('click', () => {
+            markdownPreview.scrollBy({ top: 100, behavior: 'smooth' });
+        });
+        
+        scrollThumb.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            const trackRect = scrollTrack.getBoundingClientRect();
+            const thumbHeight = scrollThumb.clientHeight;
+            const trackHeight = trackRect.height;
+            
+            let thumbPosition = e.clientY - trackRect.top - (thumbHeight / 2);
+            thumbPosition = Math.max(0, Math.min(trackHeight - thumbHeight, thumbPosition));
+            
+            const contentHeight = markdownPreview.scrollHeight;
+            const viewportHeight = markdownPreview.clientHeight;
+            const maxScroll = contentHeight - viewportHeight;
+            const scrollPosition = (thumbPosition / (trackHeight - thumbHeight)) * maxScroll;
+            
+            markdownPreview.scrollTop = scrollPosition;
+        });
+        
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        markdownPreview.addEventListener('scroll', updateScrollThumb);
+        window.addEventListener('resize', updateScrollThumb);
+        
+        // Add a message to the chat
+        function addMessage(role, content, isThinking = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role} ${isThinking ? 'thinking' : ''}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.innerHTML = `<p>${content}</p>`;
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.appendChild(messageDiv);
+            
+            // Scroll to the bottom of the chat
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 10);
+            
+            return messageDiv;
+        }
+        
+        // Handle sending a message
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message || isStreaming) return;
+            
+            // Add user message to chat
+            addMessage('user', message);
+            userInput.value = '';
+            
+            // Add to conversation history
+            conversationHistory.push({ role: 'user', content: message });
+            
+            // Show thinking message
+            const thinkingMessage = addMessage('system', 'Generating BRD...', true);
+            
+            isStreaming = true;
+            markdownStarted = false;
+            markdownBuffer = "";
+            
+            try {
+                const response = await fetch('/brd-generator/brd', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        conversation_history: conversationHistory,
+                        max_tokens: 128000,
+                        temperature: 1,
+                    }),
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API error');
+                }
+                
+                // Remove thinking message
+                chatContainer.removeChild(thinkingMessage);
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+                let responseMessage = null;
+                
+                async function read() {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) {
+                        conversationHistory.push({ role: 'assistant', content: fullResponse });
+                        
+                        if (markdownStarted && markdownBuffer) {
+                            const markdownSection = document.createElement('div');
+                            markdownSection.className = 'markdown-section';
+                            markdownSection.innerHTML = marked.parse(markdownBuffer);
+                            
+                            // Insert at the beginning for reverse order
+                            if (markdownPreview.firstChild) {
+                                markdownPreview.insertBefore(markdownSection, markdownPreview.firstChild);
+                            } else {
+                                markdownPreview.appendChild(markdownSection);
+                            }
+                            
+                            // Scroll to the bottom (which is now the top in reversed flex)
+                            markdownPreview.scrollTop = 0;
+                            updateScrollThumb();
+                        }
+                        
+                        isStreaming = false;
+                        return;
+                    }
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    
+                    if (chunk.startsWith('0:"')) {
+                        let content = chunk.substring(3, chunk.lastIndexOf('"'))
+                            .replace(/\\n/g, '\n')
+                            .replace(/\\"/g, '"')
+                            .replace(/\\\\/g, '\\');
+                        
+                        fullResponse += content;
+                        
+                        if (!markdownStarted && content.includes('#')) {
+                            markdownStarted = true;
+                            markdownBuffer = content.substring(content.indexOf('#'));
+                            console.log('%c📄 Markdown Started', 'color: orange; font-weight: bold;');
+                        } else if (markdownStarted) {
+                            markdownBuffer += content;
+                        }
+                        
+                        if (markdownStarted) {
+                            // Update temporary markdown preview
+                            if (markdownPreview.querySelector('.temp-markdown')) {
+                                markdownPreview.querySelector('.temp-markdown').remove();
+                            }
+                            
+                            const tempMarkdownDiv = document.createElement('div');
+                            tempMarkdownDiv.className = 'markdown-section temp-markdown';
+                            tempMarkdownDiv.innerHTML = marked.parse(markdownBuffer);
+                            
+                            // Insert at the beginning for reverse order
+                            if (markdownPreview.firstChild) {
+                                markdownPreview.insertBefore(tempMarkdownDiv, markdownPreview.firstChild);
+                            } else {
+                                markdownPreview.appendChild(tempMarkdownDiv);
+                            }
+                            
+                            // Scroll to the bottom (which is now the top in reversed flex)
+                            markdownPreview.scrollTop = 0;
+                            updateScrollThumb();
+                        } else {
+                            if (!responseMessage) {
+                                responseMessage = addMessage('system', '');
+                            }
+                            
+                            responseMessage.querySelector('.message-content').innerHTML += content;
+                            chatContainer.scrollTop = chatContainer.scrollHeight;
+                        }
+                    }
+                    
+                    await read();
+                }
+                
+                await read();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                chatContainer.removeChild(thinkingMessage);
+                addMessage('system', 'Sorry, there was an error generating the BRD. Please try again.');
+                isStreaming = false;
+            }
+        }
+        
+        // Event listeners
+        sendButton.addEventListener('click', sendMessage);
+        
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // Auto-resize textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Export BRD as markdown
+        exportBrdButton.addEventListener('click', () => {
+            // Get all sections in reverse order (since we're using flex-direction: column-reverse)
+            const sections = Array.from(markdownPreview.querySelectorAll('.markdown-section:not(.temp-markdown)'));
+            sections.reverse();
+            
+            const markdownContent = sections
+                .map(section => section.innerText)
+                .join('\n\n');
+            
+            if (!markdownContent) {
+                alert('No BRD content to export!');
+                return;
+            }
+            
+            const blob = new Blob([markdownContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'business_requirements_document.md';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // Clear BRD preview
+        clearBrdButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the BRD preview?')) {
+                markdownPreview.innerHTML = '';
+                markdownBuffer = '';
+                markdownStarted = false;
+                updateScrollThumb();
+            }
+        });
+        
+        // Initialize the scroll thumb
+        setTimeout(updateScrollThumb, 100);
+    </script>
+</body>
+</html>
