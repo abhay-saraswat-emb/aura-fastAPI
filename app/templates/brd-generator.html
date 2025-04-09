@@ -447,6 +447,9 @@
             
             isStreaming = true;
             markdownStarted = false;
+            
+            // Store previous markdown content if it exists
+            let previousMarkdownBuffer = markdownBuffer;
             markdownBuffer = "";
             
             try {
@@ -479,6 +482,12 @@
                         conversationHistory.push({ role: 'assistant', content: fullResponse });
                         
                         if (markdownStarted && markdownBuffer) {
+                            // Remove temporary markdown preview
+                            if (markdownPreview.querySelector('.temp-markdown')) {
+                                markdownPreview.querySelector('.temp-markdown').remove();
+                            }
+                            
+                            // Always create a new permanent markdown section
                             const markdownSection = document.createElement('div');
                             markdownSection.className = 'markdown-section';
                             markdownSection.innerHTML = marked.parse(markdownBuffer);
@@ -493,6 +502,15 @@
                             // Scroll to the bottom (which is now the top in reversed flex)
                             markdownPreview.scrollTop = 0;
                             updateScrollThumb();
+                            
+                            // If the last content doesn't include "please", "review", or "would" and we're in markdown mode,
+                            // add a follow-up message asking if the user wants to continue
+                            if (!fullResponse.toLowerCase().includes("please") && 
+                                !fullResponse.toLowerCase().includes("would")) {
+                                setTimeout(() => {
+                                    addMessage('system', 'Do you want to continue to next phase?');
+                                }, 500);
+                            }
                         }
                         
                         isStreaming = false;
@@ -507,17 +525,108 @@
                             .replace(/\\"/g, '"')
                             .replace(/\\\\/g, '\\');
                         
+                        // Remove any "0:" that might be in the content
+                        content = content.replace(/" 0:"/g, '');
+                        
                         fullResponse += content;
                         
-                        if (!markdownStarted && content.includes('#')) {
+                        // Check if content contains "Please" or "Would"
+                        if (content.includes("Please") || content.includes("Would")) {
+                            // Split the content at "Please" or "Would"
+                            let splitIndex = -1;
+                            if (content.includes("Please")) {
+                                splitIndex = content.indexOf("Please");
+                            } else if (content.includes("Would")) {
+                                splitIndex = content.indexOf("Would");
+                            }
+                            
+                            if (splitIndex > 0) {
+                                // Add the part before "Please"/"Would" to markdown if in markdown mode
+                                const beforePart = content.substring(0, splitIndex);
+                                const afterPart = content.substring(splitIndex);
+                                
+                                if (markdownStarted) {
+                                    markdownBuffer += beforePart;
+                                    
+                                    // Update temporary markdown preview
+                                    if (markdownPreview.querySelector('.temp-markdown')) {
+                                        markdownPreview.querySelector('.temp-markdown').remove();
+                                    }
+                                    
+                                    const tempMarkdownDiv = document.createElement('div');
+                                    tempMarkdownDiv.className = 'markdown-section temp-markdown';
+                                    tempMarkdownDiv.innerHTML = marked.parse(markdownBuffer);
+                                    
+                                    // Insert at the beginning for reverse order
+                                    if (markdownPreview.firstChild) {
+                                        markdownPreview.insertBefore(tempMarkdownDiv, markdownPreview.firstChild);
+                                    } else {
+                                        markdownPreview.appendChild(tempMarkdownDiv);
+                                    }
+                                    
+                                    // Exit markdown mode
+                                    markdownStarted = false;
+                                    console.log('%c📄 Markdown Ended - Please/Would detected', 'color: orange; font-weight: bold;');
+                                }
+                                
+                                // Add the part from "Please"/"Would" onwards to chat as a new message
+                                responseMessage = addMessage('system', '');
+                                responseMessage.querySelector('.message-content').innerHTML = afterPart;
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            } else {
+                                // If "Please"/"Would" is at the beginning or there's no content before it
+                                // If we were in markdown mode, exit it
+                                if (markdownStarted) {
+                                    markdownStarted = false;
+                                    console.log('%c📄 Markdown Ended - Please/Would detected', 'color: orange; font-weight: bold;');
+                                }
+                                
+                                // Ensure we have a response message
+                                if (!responseMessage) {
+                                    responseMessage = addMessage('system', '');
+                                }
+                                
+                                // Add all content to chat response
+                                responseMessage.querySelector('.message-content').innerHTML += content;
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }
+                        }
+                        // Normal markdown handling if no "Please review"
+                        else if (!markdownStarted && content.includes('#')) {
                             markdownStarted = true;
-                            markdownBuffer = content.substring(content.indexOf('#'));
+                            // If we have previous content, append the new content to it
+                            if (previousMarkdownBuffer) {
+                                markdownBuffer = previousMarkdownBuffer + "\n\n" + content.substring(content.indexOf('#'));
+                            } else {
+                                markdownBuffer = content.substring(content.indexOf('#'));
+                            }
+                            
+                            // Remove any " 0:" from the markdown buffer
+                            markdownBuffer = markdownBuffer.replace(/" 0:"/g, '');
                             console.log('%c📄 Markdown Started', 'color: orange; font-weight: bold;');
+                            
+                            // Update temporary markdown preview
+                            if (markdownPreview.querySelector('.temp-markdown')) {
+                                markdownPreview.querySelector('.temp-markdown').remove();
+                            }
+                            
+                            const tempMarkdownDiv = document.createElement('div');
+                            tempMarkdownDiv.className = 'markdown-section temp-markdown';
+                            tempMarkdownDiv.innerHTML = marked.parse(markdownBuffer);
+                            
+                            // Insert at the beginning for reverse order
+                            if (markdownPreview.firstChild) {
+                                markdownPreview.insertBefore(tempMarkdownDiv, markdownPreview.firstChild);
+                            } else {
+                                markdownPreview.appendChild(tempMarkdownDiv);
+                            }
+                            
+                            // Scroll to the bottom (which is now the top in reversed flex)
+                            markdownPreview.scrollTop = 0;
+                            updateScrollThumb();
                         } else if (markdownStarted) {
                             markdownBuffer += content;
-                        }
-                        
-                        if (markdownStarted) {
+                            
                             // Update temporary markdown preview
                             if (markdownPreview.querySelector('.temp-markdown')) {
                                 markdownPreview.querySelector('.temp-markdown').remove();
@@ -616,4 +725,3 @@
         setTimeout(updateScrollThumb, 100);
     </script>
 </body>
-</html>
