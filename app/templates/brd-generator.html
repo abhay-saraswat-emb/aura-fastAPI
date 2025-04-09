@@ -448,8 +448,7 @@
             isStreaming = true;
             markdownStarted = false;
             
-            // Store previous markdown content if it exists
-            let previousMarkdownBuffer = markdownBuffer;
+            // Reset markdown buffer for new content
             markdownBuffer = "";
             
             try {
@@ -594,12 +593,8 @@
                         // Normal markdown handling if no "Please review"
                         else if (!markdownStarted && content.includes('#')) {
                             markdownStarted = true;
-                            // If we have previous content, append the new content to it
-                            if (previousMarkdownBuffer) {
-                                markdownBuffer = previousMarkdownBuffer + "\n\n" + content.substring(content.indexOf('#'));
-                            } else {
-                                markdownBuffer = content.substring(content.indexOf('#'));
-                            }
+                            // Just use the new content
+                            markdownBuffer = content.substring(content.indexOf('#'));
                             
                             // Remove any " 0:" from the markdown buffer
                             markdownBuffer = markdownBuffer.replace(/" 0:"/g, '');
